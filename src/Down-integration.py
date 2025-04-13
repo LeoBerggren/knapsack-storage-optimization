@@ -2,10 +2,6 @@ import pandas as pd
 import numpy as np
 
 import os
-print('!!!!!!')
-print(os.getcwd())
-print(os.listdir('..'))
-print('!!!!!!')
 df = pd.read_excel('data\kidr_activity.xlsx', header=None, engine='openpyxl'
 )
 df = df.drop([0,1,2]) #Drops the rows that are not part of the data.
@@ -66,6 +62,7 @@ for index_1, value_1 in enumerate(list(df['SND number'])):
             pass
 
 data = data.astype(int)
+print(np.shape(data))
 print("data downloads: ", data)
 print('Total data downloads: ', sum(data))
 print('document downloads: ', doc)

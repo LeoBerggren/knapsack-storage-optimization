@@ -12,11 +12,11 @@ df = df.drop([0,1,2]) #Drops the rows that are not part of the data.
 df.columns = df.iloc[0].to_list() #Designates the relevant row as the header.
 df = df[1:]
 
-var = ['SND number','Size','Days passed','#Canceled','Number of Requests', 'Access Granted*'] #relevant variables
+var = ['SND number','Size','Days passed','#Canceled','Number of Requests', 'Access Granted*','Visits'] #relevant variables
 #The size of the datasets are given in MB
 df = df[var]
 df = df.reset_index(drop=True)
-columns_to_fill = ['Number of Requests', 'Access Granted*','#Canceled'] 
+columns_to_fill = ['Number of Requests', 'Access Granted*','#Canceled','Visits'] 
 df[columns_to_fill] = df[columns_to_fill].fillna(0) #Filling in the empty rows as zeros
 df['Size'] = df['Size'].astype('float')
 
@@ -62,23 +62,27 @@ data = data.astype(int)
 
 
 ### PARAMETER CONSTRUCTION ###
-
+A = 2158/233
+B = 5264/2158
+C = 10662/5264
+df['data downloads'] = data
+df['doc downloads'] = doc
 #Constructing the hyperparameters
 Weights = (df['Size']*1000).tolist() #converts from MB to KB
 #print(Weights)
-Values = (df['Access Granted*']+1/2*(df['Number of Requests']-1/2*df['#Canceled'])+1)/df['Days passed'].astype(float).tolist()
+Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#Canceled']))+(B*C*df['data downloads']+C*df['doc downloads'])+df['Visits']))/df['Days passed'].astype(float).tolist()
 #print(Values)
 #print(sum(Weights))
 Max_capacity = int(0.1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
 #We test different constructed max capacities to restrain the knapsack more
 
 # DP SPECIFIC PARAMETERS #
-dp_weights = [w/100+1 for w in Weights] #makes sure that we won't have a zero when we round the weights 
-dp_weights = [round(w) for w in dp_weights] #also converts the weights to 100s of kb
-Max_capacity_dp = int(Max_capacity/100) #Converts max_capacity to 100s of kb
+dp_weights = [w/1000+1 for w in Weights] #makes sure that we won't have a zero when we round the weights 
+dp_weights = [round(w) for w in dp_weights] #also converts the weights to Mb
+Max_capacity_dp = int(Max_capacity/1000) #Converts max_capacity to Mb
 
 #REVERSE DP SPECIFIC PARAMETERS #
-Round_values = round(1000*1000*Values) #Integer conversion of values, different powers of 10 gives varying specificity
+Round_values = round(10000*Values) #Integer conversion of values, different powers of 10 gives varying specificity
 #print(Round_values)
 V_SUM_MAX = int(sum(Round_values))  # Maximum possible value sum
 N_MAX = len(Values)
@@ -316,18 +320,19 @@ def knapsack_branch_and_bound(values, weights, W):
     return max_value, best_items
 
 ### CALCULATIONS OF RESULTS ###
+print('calculating dp')
 st_dp = time.process_time()
 max_dp_val, selected_dp_items = dyn_knapsack(dp_weights, Values, Max_capacity_dp)
 et_dp = time.process_time()
 dp_time = et_dp-st_dp
 
-
+print('calculating rdp')
 st_rdp = time.process_time()
 max_rdp_val, selected_rdp_items, used_capacity = knapsack_large_weights(Weights, Round_values, Max_capacity)
 et_rdp = time.process_time()
 rdp_time = et_rdp-st_rdp
 
-
+print('calculating greedy')
 st_gr = time.process_time()
 gr_selected_items = Greedy_knapsack(Max_capacity, Weights, Values)
 et_gr = time.process_time()
