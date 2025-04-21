@@ -3,7 +3,7 @@ import numpy as np
 import heapq
 import random
 import time
-random.seed(3.14159)
+random.seed(438579088)
 
 
 ### DATA CONSTRUCTION ###
@@ -90,9 +90,9 @@ W_MAX = float('inf')  # Use infinity for large weights
 dp = [[W_MAX for _ in range(N_MAX)] for _ in range(V_SUM_MAX + 1)]
 
 # GENETIC ALGORITHM SPECIFIC PARAMETERS #
-population_size = 100
-generations = 100
-mutation_rate = 0.01
+population_size = 200
+generations = 250
+mutation_rate = 0.012
 
 
 ### ALGORITHMS ###
@@ -320,36 +320,39 @@ def knapsack_branch_and_bound(values, weights, W):
     return max_value, best_items
 
 ### CALCULATIONS OF RESULTS ###
-print('calculating dp')
-st_dp = time.process_time()
+st_dp = time.process_time_ns()
 max_dp_val, selected_dp_items = dyn_knapsack(dp_weights, Values, Max_capacity_dp)
-et_dp = time.process_time()
+et_dp = time.process_time_ns()
 dp_time = et_dp-st_dp
 
-print('calculating rdp')
-st_rdp = time.process_time()
+st_rdp = time.process_time_ns()
 max_rdp_val, selected_rdp_items, used_capacity = knapsack_large_weights(Weights, Round_values, Max_capacity)
-et_rdp = time.process_time()
+et_rdp = time.process_time_ns()
 rdp_time = et_rdp-st_rdp
 
-print('calculating greedy')
-st_gr = time.process_time()
+st_gr = time.process_time_ns()
 gr_selected_items = Greedy_knapsack(Max_capacity, Weights, Values)
-et_gr = time.process_time()
+et_gr = time.process_time_ns()
 gr_time = et_gr - st_gr 
 
-st_gen = time.process_time()
+st_gen = time.process_time_ns()
 max_gen_val, selected_gen_items, used_capacity = genetic_knapsack(Weights, Values, Max_capacity, population_size, generations, mutation_rate)
-et_gen = time.process_time()
+et_gen = time.process_time_ns()
 gen_time = et_gen - st_gen
 
-st_BnB = time.process_time()
+st_BnB = time.process_time_ns()
 max_BnB_val, selected_BnB_items = knapsack_branch_and_bound(Values, Weights, Max_capacity)
-et_BnB = time.process_time()
+et_BnB = time.process_time_ns()
 BnB_time = et_BnB - st_BnB
 
 # Comparison of in common selected items #
 
+#Note that these sets only count the selected items
+#Thus we have that Iij = intersection of sets i and j is only those items
+#selected in both sets.
+# union of i j count every selected item in either sets, which gives that:
+# Total objects -  the union is the items that were not selected by both sets.
+# which means we want to calculate (Total - Union + Intersection)/T to get our percentage
 #Intersections
 I12 = len(list(set(selected_dp_items) & set(selected_rdp_items)))
 I13 = len(list(set(selected_dp_items) & set(gr_selected_items)))
@@ -381,20 +384,21 @@ U35 = len(list(set(gr_selected_items).union(set(selected_BnB_items))))
 
 U45 = len(list(set(selected_gen_items).union(set(selected_BnB_items))))
 
-#Union/Intersection
-C12 = I12/U12
-C13 = I13/U13
-C14 = I14/U14
-C15 = I15/U15
+Total = len(Values)
+#Percentage
+C12 = (Total-U12+I12)/Total
+C13 = (Total-U13+I13)/Total
+C14 = (Total-U14+I14)/Total
+C15 = (Total-U15+I15)/Total
 
-C23 = I23/U23
-C24 = I24/U24
-C25 = I25/U25
+C23 = (Total-U23+I23)/Total
+C24 = (Total-U24+I24)/Total
+C25 = (Total-U25+I25)/Total
 
-C34 = I34/U34
-C35 = I35/U35
+C34 = (Total-U34+I34)/Total
+C35 = (Total-U35+I35)/Total
 
-C45 = I45/U45
+C45 = (Total-U45+I45)/Total
 C = {
     (1, 2): C12,
     (1, 3): C13,
@@ -414,7 +418,7 @@ matrix = pd.DataFrame(100.0, index=range(1, n+1), columns=range(1, n+1))
 
 # Fill in C-values symmetrically
 for (i, j), c_val in C.items():
-    matrix.at[i, j] = c_val*100
+    matrix.at[i, j] = c_val*100 #percentage
     matrix.at[j, i] = c_val*100  # Symmetry
 
 
@@ -442,3 +446,6 @@ print('Processing time: ', BnB_time)
 
 # Display the matrix
 print(matrix.round(2))
+
+print('Total Value of All Items: ', sum(Values))
+print('Total Weight of All Items: ', sum(Weights))

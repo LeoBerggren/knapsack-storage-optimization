@@ -1,35 +1,64 @@
 import random
 import pandas as pd
 import numpy as np
-random.seed(3.14159)
+import time
+
+random.seed(438579088)
 
 
-df = pd.read_excel('../data/kidr_activity.xlsx', header=None)
+df = pd.read_excel('data/kidr_activity.xlsx', header=None)
 df = df.drop([0,1,2]) #Drops the rows that are not part of the data.
 df.columns = df.iloc[0].to_list() #Designates the relevant row as the header.
 df = df[1:]
 #print(df.head())
 #print(df.columns)
 
-var = ['SND number','Size','Days passed','#Canceled','Number of Requests', 'Access Granted*'] #relevant variables
+var = ['SND number','Size','Days passed','#Canceled','Number of Requests', 'Access Granted*','Visits'] #relevant variables
 #The size of the datasets are given in MB
 df = df[var]
 df = df.reset_index(drop=True)
-columns_to_fill = ['Number of Requests', 'Access Granted*','#Canceled'] 
+columns_to_fill = ['Number of Requests', 'Access Granted*','#Canceled','Visits'] 
 df[columns_to_fill] = df[columns_to_fill].fillna(0) #Filling in the empty rows as zeros
 df['Size'] = df['Size'].astype('float') #Since the class of 'Size' is initially strings we convert it to float
-"""
-print(df.head())
-print(df.loc[1, 'Size'])
-print(type(df.loc[1, 'Size']))
-print(type(df.loc[1, 'Days passed']))
-print(type(df.loc[1, 'Number of Requests']))
-"""
+
+df_ned = pd.read_excel('data/nedladdningar.xlsx', header=None)
+df_ned.columns = df_ned.iloc[0].to_list() #Designates the relevant row as the header.
+df_ned = df_ned[1:]
+
+var_ned = ['Dataset','Filtyp']
+df_ned = df_ned[var_ned]
+
+data = np.zeros(len(df)) #Vector of 62 zeros
+doc = np.zeros(len(df))
+
+for index_1, value_1 in df['SND number'].items():
+    index_1_int: int = int(index_1)  # Explicitly cast to int
+    for index_2, value_2 in df_ned['Dataset'].items():
+        index_2_int: int = int(index_2)  # Explicitly cast to int
+        filtyp_value2: str = df_ned['Filtyp'][index_2_int] #explicitly declare that the value is a string.
+        if value_2 == value_1:
+                if df_ned['Filtyp'][index_2_int] == 'dokumentation':
+                    doc[index_1_int] += 1
+                elif df_ned['Filtyp'][index_2_int]== 'data':
+                    data[index_1_int] += 1
+                else:
+                    print('something wrong')
+        else:
+            pass
+
+data = data.astype(int)
+
+
 #Constructing the hyperparameters
-Weights = (df['Size']*1000).tolist() #MB
+A = 2158/233
+B = 5264/2158
+C = 10662/5264
+df['data downloads'] = data
+df['doc downloads'] = doc
+#Constructing the hyperparameters
+Weights = (df['Size']*1000).tolist() #converts from MB to KB
 #print(Weights)
-Values = (1000*(df['Access Granted*']+1/2*(df['Number of Requests']-1/2*df['#Canceled'])+1))/df['Days passed'].astype(float).tolist()
-#print(Values)
+Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#Canceled']))+(B*C*df['data downloads']+C*df['doc downloads'])+df['Visits']))/df['Days passed'].astype(float).tolist()
 #print(sum(Weights))
 Max_capacity = int(0.1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
 #We test different constructed max capacities to restrain the knapsack more
@@ -96,15 +125,18 @@ def genetic_knapsack(weights, values, max_capacity, population_size, generations
     return best_fitness, selected_items, used_capacity
 
 # Example Usage
-weights = [2, 5, 10, 5]
-values = [40, 30, 50, 10]
-max_capacity = 16
-population_size = 100
-generations = 100
-mutation_rate = 0.01
+exweights = [2, 5, 10, 5]
+exvalues = [40, 30, 50, 10]
+exmax_capacity = 16
+population_size = 200
+generations = 250
+mutation_rate = 0.012
 
+time_start = time.process_time()
 best_fitness, selected_items, used_capacity = genetic_knapsack(Weights, Values, Max_capacity, population_size, generations, mutation_rate)
+time_end = time.process_time()
 
+print('Time spent calculating: ', time_end-time_start)
 print(sum(Values[i] for i in selected_items))
 print("Best fitness:", best_fitness)
 print("Selected items:", selected_items)
@@ -114,3 +146,8 @@ Total_weight = sum(Weights)
 print(Total_weight)
 print(a)
 print(a/Max_capacity)
+
+#Currently best found value: 17.68837... with Hpar: Mrate = 0.012, Pop=200, Gen=250 
+
+print('Total Value of All Items: ', sum(Values))
+print('Total Weight of All Items: ', sum(Weights))

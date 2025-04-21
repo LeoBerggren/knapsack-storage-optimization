@@ -7,20 +7,20 @@ random.seed(42)
 
 
 
-df = pd.read_excel('/data/kidr_activity.xlsx', header=None)
+df = pd.read_excel('data/kidr_activity.xlsx', header=None)
 df = df.drop([0,1,2]) #Drops the rows that are not part of the data.
 df.columns = df.iloc[0].to_list() #Designates the relevant row as the header.
 df = df[1:]
 
-var = ['SND number','Size','Days passed','#Canceled','Number of Requests', 'Access Granted*'] #relevant variables
+var = ['SND number','Size','Days passed','#Canceled','Number of Requests', 'Access Granted*','Visits'] #relevant variables
 #The size of the datasets are given in MB
 df = df[var]
 df = df.reset_index(drop=True)
-columns_to_fill = ['Number of Requests', 'Access Granted*','#Canceled'] 
+columns_to_fill = ['Number of Requests', 'Access Granted*','#Canceled','Visits'] 
 df[columns_to_fill] = df[columns_to_fill].fillna(0) #Filling in the empty rows as zeros
 df['Size'] = df['Size'].astype('float')
 
-df_ned = pd.read_excel('/data/nedladdningar.xlsx', header=None)
+df_ned = pd.read_excel('data/nedladdningar.xlsx', header=None)
 df_ned.columns = df_ned.iloc[0].to_list() #Designates the relevant row as the header.
 df_ned = df_ned[1:]
 
@@ -55,10 +55,16 @@ for index_1, value_1 in df['SND number'].items():
 
 data = data.astype(int)
 
+### PARAMETER CONSTRUCTION ###
+A = 2158/233
+B = 5264/2158
+C = 10662/5264
+df['data downloads'] = data
+df['doc downloads'] = doc
 #Constructing the hyperparameters
 Weights = (df['Size']*1000).tolist() #converts from MB to KB
 #print(Weights)
-Values = (df['Access Granted*']+1/2*(df['Number of Requests']-1/2*df['#Canceled'])+1)/df['Days passed'].astype(float).tolist()
+Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#Canceled']))+(B*C*df['data downloads']+C*df['doc downloads'])+df['Visits']))/df['Days passed'].astype(float).tolist()
 #print(Values)
 #print(sum(Weights))
 Max_capacity = int(0.1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
@@ -119,7 +125,7 @@ def gap_branch_and_bound(values, weights, capacities):
                             if new_agent_loads[a] + weights[a][next_task] <= capacities[a]:
                                 best_ratio = max(best_ratio, ratio)
                     est_bound += best_ratio * 1  # Assume we can pick the best agent for this task
-                eps = 0.09
+                eps = 5 #decided the fineness of our search, the larger it is the more options we search through
                 if est_bound > best_value-eps:
                     heapq.heappush(heap, (-est_bound, new_value, task_idx + 1, new_agent_loads, new_assignment))
                 #else:
@@ -142,8 +148,8 @@ def gap_branch_and_bound(values, weights, capacities):
 
 
 
-Capacities = [2*0.5*Max_capacity, 100*Max_capacity]
-Multi_values = [1*Values, [0.5 * v for v in Values]]
+Capacities = [2*0.5*Max_capacity, 20*Max_capacity]
+Multi_values = [1*Values, [0.1 * v for v in Values]]
 Multi_weights = [Weights, Weights] #In our case I don't think there is any need to change both capacity and weights. 
 #They stand for different things, but since we assume that it will affect it linearly, the change is already applied to capacity
 #Alternatively we can think that from a budget perspective it is cheaper to buy the storage(capacity) but it
@@ -152,4 +158,20 @@ Multi_weights = [Weights, Weights] #In our case I don't think there is any need 
 Max_val, Assignment = gap_branch_and_bound(Multi_values, Multi_weights, Capacities)
 print("Max total value:", Max_val)
 print("Task assignments (task -> agent):", Assignment)
+print(type(Assignment))
+
+Value = 0
+Ws = 0
+Ls = 0
+for ind, val in enumerate(Assignment):
+    if val == 1: #Lukewarm storage
+        Value += 0.1*Values[ind]
+        Ls += Weights[ind]
+    elif val == 0: #Warm storage
+        Value += Values[ind]
+        Ws += Weights[ind]
+
+print('Value double check: ', Value)
+print('Weights in warm storage: ', Ws)
+print('Weights in Lukewarm storage: ', Ls)
 

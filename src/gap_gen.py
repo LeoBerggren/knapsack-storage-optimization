@@ -7,20 +7,20 @@ random.seed(45)
 
 
 
-df = pd.read_excel('../data/kidr_activity.xlsx', header=None)
+df = pd.read_excel('data/kidr_activity.xlsx', header=None)
 df = df.drop([0,1,2]) #Drops the rows that are not part of the data.
 df.columns = df.iloc[0].to_list() #Designates the relevant row as the header.
 df = df[1:]
 
-var = ['SND number','Size','Days passed','#Canceled','Number of Requests', 'Access Granted*'] #relevant variables
+var = ['SND number','Size','Days passed','#Canceled','Number of Requests', 'Access Granted*','Visits'] #relevant variables
 #The size of the datasets are given in MB
 df = df[var]
 df = df.reset_index(drop=True)
-columns_to_fill = ['Number of Requests', 'Access Granted*','#Canceled'] 
+columns_to_fill = ['Number of Requests', 'Access Granted*','#Canceled','Visits'] 
 df[columns_to_fill] = df[columns_to_fill].fillna(0) #Filling in the empty rows as zeros
 df['Size'] = df['Size'].astype('float')
 
-df_ned = pd.read_excel('../data/nedladdningar.xlsx', header=None)
+df_ned = pd.read_excel('data/nedladdningar.xlsx', header=None)
 df_ned.columns = df_ned.iloc[0].to_list() #Designates the relevant row as the header.
 df_ned = df_ned[1:]
 
@@ -30,7 +30,6 @@ df_ned = df_ned[var_ned]
 #pseudocode
 data = np.zeros(len(df)) #Vector of 62 zeros
 doc = np.zeros(len(df))
-print('datapoints: ', len(df))
 
 
 #for each dataset (those in df) this will go through each download in df_ned for that dataset and count it as data
@@ -56,9 +55,16 @@ for index_1, value_1 in df['SND number'].items():
 data = data.astype(int)
 
 #Constructing the hyperparameters
+A = 2158/233
+B = 5264/2158
+C = 10662/5264
+df['data downloads'] = data
+df['doc downloads'] = doc
+#Constructing the hyperparameters
 Weights = (df['Size']*1000).tolist() #converts from MB to KB
 #print(Weights)
-Values = (df['Access Granted*']+1/2*(df['Number of Requests']-1/2*df['#Canceled'])+1)/df['Days passed'].astype(float).tolist()
+Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#Canceled']))+(B*C*df['data downloads']+C*df['doc downloads'])+df['Visits']))/df['Days passed'].astype(float).tolist()
+#print(Values)
 #print(Values)
 #print(sum(Weights))
 Max_capacity = int(0.1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
