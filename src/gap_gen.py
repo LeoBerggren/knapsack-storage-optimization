@@ -2,8 +2,9 @@ import random
 import numpy as np
 import heapq
 import pandas as pd
-# Set random seed
-random.seed(45)
+import time
+# Set random seed #42, 49
+random.seed(112)
 
 
 
@@ -69,7 +70,7 @@ Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#C
 #print(sum(Weights))
 Max_capacity = int(0.1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
 #We test different constructed max capacities to restrain the knapsack more
-
+#First results with pop=100, gen=300, mut=0.05
 def genetic_algorithm(values, weights, capacities, population_size=100, generations=300, mutation_rate=0.05):
     num_agents = len(values)
     num_tasks = len(values[0])
@@ -121,7 +122,7 @@ def genetic_algorithm(values, weights, capacities, population_size=100, generati
         next_gen = population[:10]  # Elitism: keep top 10
 
         while len(next_gen) < population_size:
-            parent1, parent2 = random.choices(population[:50], k=2)  # Select top 50
+            parent1, parent2 = random.choices(population[:50], k=2)  # Select top half /50
             child = crossover(parent1, parent2)
             child = mutate(child)
             next_gen.append(child)
@@ -130,10 +131,14 @@ def genetic_algorithm(values, weights, capacities, population_size=100, generati
 
     return best_fitness, best_solution
 
-Capacities = [0.5*Max_capacity, 10*Max_capacity]
-Multi_values = [1*Values, [0.5 * v for v in Values]]
+Capacities = [0.5*Max_capacity, Max_capacity]
+Multi_values = [1*Values, [0.8 * v for v in Values]]
 Multi_weights = [Weights, Weights]
 
+st = time.process_time_ns()
 Max_val, Assignment = genetic_algorithm(Multi_values, Multi_weights, Capacities)
+et = time.process_time_ns()
+time = et-st
+print('Time: ', time)
 print("Max total value (GA):", Max_val)
 print("Task assignments (task -> agent):", Assignment)

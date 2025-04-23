@@ -73,7 +73,7 @@ Weights = (df['Size']*1000).tolist() #converts from MB to KB
 Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#Canceled']))+(B*C*df['data downloads']+C*df['doc downloads'])+df['Visits']))/df['Days passed'].astype(float).tolist()
 #print(Values)
 #print(sum(Weights))
-Max_capacity = int(0.1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
+Max_capacity = int(0.5*1000*1000*1000) #Tot cap of KI is 70Tb
 #We test different constructed max capacities to restrain the knapsack more
 
 # DP SPECIFIC PARAMETERS #
@@ -284,6 +284,14 @@ def knapsack_branch_and_bound(values, weights, W):
                 break
         return bound
 
+    # Sort items by value-to-weight ratio
+    value_weight_ratio = [v / w if w > 0 else 0 for v, w in zip(values, weights)]
+    sorted_items = sorted(enumerate(value_weight_ratio), key=lambda x: x[1], reverse=True)
+    sorted_indices = [i for i, _ in sorted_items]
+
+    values_sorted = [values[i] for i in sorted_indices]
+    weights_sorted = [weights[i] for i in sorted_indices]
+
     n = len(values)
     max_value = 0
     best_items = []
@@ -292,32 +300,52 @@ def knapsack_branch_and_bound(values, weights, W):
     queue = []
     heapq.heappush(queue, (-0, 0, 0, -1, []))
 
+    visited = {} #Establishes a dictionary of visited states
+
+    iteration = 0
     while queue:
+        iteration += 1
+        if iteration % 10000 == 0:
+            print(f"⏳ Iteration {iteration:,}, Queue size: {len(queue)}, Best value so far: {max_value:.2f}")
+
         neg_value, curr_weight, bound, index, included = heapq.heappop(queue)
         curr_value = -neg_value
 
-        if curr_weight <= W and curr_value > max_value:
+        # Prune by state revisiting
+        key_weight = int(curr_weight // 1)  # round to whole numbers
+        state_key = (index, key_weight)
+        if state_key in visited and visited[state_key] >= curr_value:
+            continue
+        visited[state_key] = curr_value
+
+        if curr_weight <= W and curr_value >= max_value:
             max_value = curr_value
             best_items = included
 
+
         if index + 1 < n:
-            # Include the next item
             next_index = index + 1
-            new_weight = curr_weight + weights[next_index]
-            new_value = curr_value + values[next_index]
+            
+            # Include the next item
+            new_weight = curr_weight + weights_sorted[next_index]
+            new_value = curr_value + values_sorted[next_index]
             new_included = included + [next_index]
 
             if new_weight <= W:
-                new_bound = calculate_bound(new_value, new_weight, next_index, values, weights, W)
+                new_bound = calculate_bound(new_value, new_weight, next_index, values_sorted, weights_sorted, W)
                 if new_bound > max_value:
                     heapq.heappush(queue, (-new_value, new_weight, new_bound, next_index, new_included))
 
             # Exclude the next item
-            new_bound = calculate_bound(curr_value, curr_weight, next_index, values, weights, W)
+            new_bound = calculate_bound(curr_value, curr_weight, next_index, values_sorted, weights_sorted, W)
             if new_bound > max_value:
                 heapq.heappush(queue, (-curr_value, curr_weight, new_bound, next_index, included))
+   
+    # Map back to original indices
+    best_items_original = [sorted_indices[i] for i in best_items]
 
-    return max_value, best_items
+    return max_value, best_items_original
+
 
 ### CALCULATIONS OF RESULTS ###
 st_dp = time.process_time_ns()

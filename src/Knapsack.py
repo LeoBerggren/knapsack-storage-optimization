@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-df = pd.read_excel('../data/kidr_activity.xlsx', header=None)
+df = pd.read_excel('/data/kidr_activity.xlsx', header=None)
 df = df.drop([0,1,2]) #Drops the rows that are not part of the data.
 df.columns = df.iloc[0].to_list() #Designates the relevant row as the header.
 df = df[1:]

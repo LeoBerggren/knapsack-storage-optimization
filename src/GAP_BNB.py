@@ -2,6 +2,7 @@ import heapq
 import random
 import pandas as pd
 import numpy as np
+import time
 # Set random seed
 random.seed(42)
 
@@ -125,8 +126,8 @@ def gap_branch_and_bound(values, weights, capacities):
                             if new_agent_loads[a] + weights[a][next_task] <= capacities[a]:
                                 best_ratio = max(best_ratio, ratio)
                     est_bound += best_ratio * 1  # Assume we can pick the best agent for this task
-                eps = 5 #decided the fineness of our search, the larger it is the more options we search through
-                if est_bound > best_value-eps:
+                eps = 3 #decided the fineness of our search, the larger it is the more options we search through
+                if est_bound > 2*(best_value)/3:
                     heapq.heappush(heap, (-est_bound, new_value, task_idx + 1, new_agent_loads, new_assignment))
                 #else:
                     #print(f"✘ Pruned (low bound): task {task} -> agent {agent}, est_bound={est_bound:.4f}, current best={best_value:.4f}")
@@ -155,7 +156,10 @@ Multi_weights = [Weights, Weights] #In our case I don't think there is any need 
 #Alternatively we can think that from a budget perspective it is cheaper to buy the storage(capacity) but it
 #is still a storage perspective rather than cost.
 
+st = time.process_time_ns()
 Max_val, Assignment = gap_branch_and_bound(Multi_values, Multi_weights, Capacities)
+et = time.process_time_ns()
+print('Time: ', et-st)
 print("Max total value:", Max_val)
 print("Task assignments (task -> agent):", Assignment)
 print(type(Assignment))

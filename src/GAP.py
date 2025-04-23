@@ -66,8 +66,8 @@ Max_capacity = int(0.1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI
 #We test different constructed max capacities to restrain the knapsack more
 
 ## Specs of capacities, weights & values of knapsacks/agents ##
-Capacities = [2*0.5*Max_capacity, 20*Max_capacity]
-Multi_values = [1*Values, [0.1 * v for v in Values]]
+Capacities = [0.5*Max_capacity, Max_capacity]
+Multi_values = [1*Values, [0.8 * v for v in Values]]
 Multi_weights = [Weights, Weights]
 
 ### ALGORITHMS ###
@@ -189,7 +189,7 @@ def gap_branch_and_bound(values, weights, capacities):
                             if new_agent_loads[a] + weights[a][next_task] <= capacities[a]:
                                 best_ratio = max(best_ratio, ratio)
                     est_bound += best_ratio * 1  # Assume we can pick the best agent for this task
-                eps = 0.09
+                eps = 3
                 if est_bound > best_value-eps:
                     heapq.heappush(heap, (-est_bound, new_value, task_idx + 1, new_agent_loads, new_assignment))
                 #else:
@@ -230,7 +230,7 @@ Ws_gen = 0 #Warm storage used
 Ls_gen = 0 #Lukewarm storage used
 for ind, val in enumerate(Assignment_gen):
     if val == 1: #Lukewarm storage
-        Value_gen += 0.1*Values[ind]
+        Value_gen += 0.8*Values[ind]
         Ls_gen += Weights[ind]
     elif val == 0: #Warm storage
         Value_gen += Values[ind]
@@ -241,7 +241,7 @@ Ws_bnb = 0
 Ls_bnb = 0
 for ind, val in enumerate(Assignment_bnb):
     if val == 1: #Lukewarm storage
-        Value_bnb += 0.1*Values[ind]
+        Value_bnb += 0.8*Values[ind]
         Ls_bnb += Weights[ind]
     elif val == 0: #Warm storage
         Value_bnb += Values[ind]
@@ -270,7 +270,7 @@ for i_bnb, v_bnb in enumerate(Assignment_bnb):
             pass
 
 corr = set_int/len(Assignment_bnb) #percentage of choices in common
-corr_wide = (set_int+set_inc)/len(Assignment_bnb) #percentage of choices in common when LW=W
+corr_wide = (set_int+set_inc)/len(Assignment_bnb) #percentage of choices in common if LW=W
 inclusions = (W_st+LW_st+set_inc)/len(Assignment_bnb) #Percentage of items included in knapsacks
 
 
