@@ -3,8 +3,8 @@ import numpy as np
 import heapq
 import pandas as pd
 import time
-# Set random seed #42, 49
-random.seed(112)
+# Set random seed #42, 49, #112
+random.seed(42)
 
 
 
@@ -68,10 +68,10 @@ Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#C
 #print(Values)
 #print(Values)
 #print(sum(Weights))
-Max_capacity = int(0.1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
+Max_capacity = int(1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
 #We test different constructed max capacities to restrain the knapsack more
 #First results with pop=100, gen=300, mut=0.05
-def genetic_algorithm(values, weights, capacities, population_size=100, generations=300, mutation_rate=0.05):
+def genetic_algorithm(values, weights, capacities, population_size=100, generations=1000, mutation_rate=0.05):
     num_agents = len(values)
     num_tasks = len(values[0])
 
@@ -103,7 +103,9 @@ def genetic_algorithm(values, weights, capacities, population_size=100, generati
 
     def crossover(parent1, parent2):
         point = random.randint(1, num_tasks - 2)
-        return parent1[:point] + parent2[point:]
+        child1 = parent1[:point] + parent2[point:]
+        child2 = parent2[:point] + parent1[point:]        
+        return child1, child2
 
     # Initialize population
     population = [create_individual() for _ in range(population_size)]
@@ -123,16 +125,17 @@ def genetic_algorithm(values, weights, capacities, population_size=100, generati
 
         while len(next_gen) < population_size:
             parent1, parent2 = random.choices(population[:50], k=2)  # Select top half /50
-            child = crossover(parent1, parent2)
-            child = mutate(child)
-            next_gen.append(child)
+            child1, child2 = crossover(parent1, parent2)
+            child1 = mutate(child1)
+            child2 = mutate(child2)
+            next_gen.extend([child1,child2])
 
         population = next_gen
 
     return best_fitness, best_solution
 
-Capacities = [0.5*Max_capacity, Max_capacity]
-Multi_values = [1*Values, [0.8 * v for v in Values]]
+Capacities = [0.1*Max_capacity, 1.8*Max_capacity]
+Multi_values = [1*Values, [0.5 * v for v in Values]]
 Multi_weights = [Weights, Weights]
 
 st = time.process_time_ns()

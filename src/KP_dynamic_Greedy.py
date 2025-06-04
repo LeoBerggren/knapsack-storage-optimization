@@ -24,13 +24,8 @@ print(type(df.loc[1, 'Number of Requests']))
 """
 #Constructing the hyperparameters
 Weights = (df['Size']*1000).tolist() #converts from MB to KB
-#print(Weights)
 Values = (df['Access Granted*']+1/2*(df['Number of Requests']-1/2*df['#Canceled'])+1)/df['Days passed'].astype(float).tolist()
-#print(Values)
-#print(sum(Weights))
-Max_capacity = int(0.1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
-#We test different constructed max capacities to restrain the knapsack more
-#print(Values)
+Max_capacity = int(0.1*1000*1000*1000) #This is 100GB. Other values might be appropriate
 
 """The disparity between the weights, i.e. that some are very big and some very small, makes this problem 
 fundamentally unsuited for an dynamic programming approach. Since Scaling the weights such that there are no

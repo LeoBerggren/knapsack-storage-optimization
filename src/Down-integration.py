@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
-
 import os
-df = pd.read_excel('data\kidr_activity.xlsx', header=None, engine='openpyxl'
-)
+
+
+df = pd.read_excel('data\kidr_activity.xlsx', header=None, engine='openpyxl')
 df = df.drop([0,1,2]) #Drops the rows that are not part of the data.
 df.columns = df.iloc[0].to_list() #Designates the relevant row as the header.
 df = df[1:]
@@ -16,8 +16,7 @@ columns_to_fill = ['Number of Requests', 'Access Granted*','#Canceled']
 df[columns_to_fill] = df[columns_to_fill].fillna(0) #Filling in the empty rows as zeros
 df['Size'] = df['Size'].astype('float')
 
-df_ned = pd.read_excel('data/nedladdningar.xlsx', header=None, engine='openpyxl'
-)
+df_ned = pd.read_excel('data/nedladdningar.xlsx', header=None, engine='openpyxl')
 df_ned.columns = df_ned.iloc[0].to_list() #Designates the relevant row as the header.
 df_ned = df_ned[1:]
 

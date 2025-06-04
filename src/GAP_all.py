@@ -4,7 +4,7 @@ import heapq
 import pandas as pd
 import time
 
-random.seed(42) # Sets random seed
+#random.seed(45) # Sets random seed
 
 ### DATA CONSTRUCTION ###
 df = pd.read_excel('data/kidr_activity.xlsx', header=None)
@@ -62,18 +62,18 @@ df['doc downloads'] = doc
 Weights = (df['Size']*1000).tolist() #converts from MB to KB
 Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#Canceled']))+(B*C*df['data downloads']+C*df['doc downloads'])+df['Visits']))/df['Days passed'].astype(float).tolist()
 
-Max_capacity = int(0.1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
+Max_capacity = int(1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
 #We test different constructed max capacities to restrain the knapsack more
 
 ## Specs of capacities, weights & values of knapsacks/agents ##
-Capacities = [0.5*Max_capacity, Max_capacity]
-Multi_values = [1*Values, [0.8 * v for v in Values]]
+Capacities = [0.9*Max_capacity, 0.2*Max_capacity] 
+Multi_values = [1*Values, [0.5 * v for v in Values]]
 Multi_weights = [Weights, Weights]
 
 ### ALGORITHMS ###
 
 ## GENETIC ALGORITHM ##
-def genetic_algorithm(values, weights, capacities, population_size=100, generations=300, mutation_rate=0.05):
+def genetic_algorithm(values, weights, capacities, population_size=100, generations=1000, mutation_rate=0.05):
     num_agents = len(values)
     num_tasks = len(values[0])
 
@@ -83,7 +83,8 @@ def genetic_algorithm(values, weights, capacities, population_size=100, generati
     def fitness(individual):
         total_value = 0
         agent_loads = [0] * num_agents
-
+        penalty = 0
+        
         for t, agent in enumerate(individual):
             if agent == -1:
                 continue
@@ -94,8 +95,16 @@ def genetic_algorithm(values, weights, capacities, population_size=100, generati
                 total_value += task_value
             else:
                 return 0  # Heavy penalty for invalid solutions
+            
+            """
+            #Alternative that allows invalid but good possibly solutions propagate with penalty
+            agent_loads[agent] += task_weight
+            total_value += task_value
+            for agent, load in enumerate(agent_loads):
+                if load > capacities[agent]:
+                    penalty += (load - capacities[agent]) * 0.01  # tune this multiplier """
 
-        return total_value
+        return total_value # - penalty
 
     def mutate(individual):
         for i in range(num_tasks):
@@ -105,8 +114,22 @@ def genetic_algorithm(values, weights, capacities, population_size=100, generati
 
     def crossover(parent1, parent2):
         point = random.randint(1, num_tasks - 2)
-        return parent1[:point] + parent2[point:]
-
+        child1 = parent1[:point] + parent2[point:]
+        child2 = parent2[:point] + parent1[point:]        
+        return child1, child2
+    
+    # If we want to allow invalid solutions to propagate
+    """
+    def is_valid(individual):
+        agent_loads = [0] * num_agents
+        for t, agent in enumerate(individual):
+            if agent == -1:
+                continue
+            if agent_loads[agent] + weights[agent][t] > capacities[agent]:
+                return False
+            agent_loads[agent] += weights[agent][t]
+        return True
+    """
     # Initialize population
     population = [create_individual() for _ in range(population_size)]
 
@@ -121,16 +144,28 @@ def genetic_algorithm(values, weights, capacities, population_size=100, generati
             best_solution = population[0]
             #print(f"Gen {gen}: New best value: {best_fitness:.4f}")
 
+        #Constructing next generation
         next_gen = population[:10]  # Elitism: keep top 10
-
-        while len(next_gen) < population_size:
+        while len(next_gen) < population_size: 
             parent1, parent2 = random.choices(population[:50], k=2)  # Select top 50
-            child = crossover(parent1, parent2)
-            child = mutate(child)
-            next_gen.append(child)
+            child1, child2 = crossover(parent1, parent2)
+            child1 = mutate(child1)
+            child2 = mutate(child2)
+            next_gen.extend([child1,child2])
 
         population = next_gen
 
+    #Valid check at end if we allow invalid individuals
+    """
+    valid_population = [ind for ind in population if is_valid(ind)]
+    if valid_population:
+        best_solution = max(valid_population, key=fitness)
+        best_fitness = fitness(best_solution)
+    else:
+        print("⚠️ No valid solutions found in final generation.")
+        best_solution = []
+        best_fitness = 0
+    """
     return best_fitness, best_solution
 
 ## BRANCH AND BOUND ALGORITHM ##
@@ -230,7 +265,7 @@ Ws_gen = 0 #Warm storage used
 Ls_gen = 0 #Lukewarm storage used
 for ind, val in enumerate(Assignment_gen):
     if val == 1: #Lukewarm storage
-        Value_gen += 0.8*Values[ind]
+        Value_gen += 0.5*Values[ind]
         Ls_gen += Weights[ind]
     elif val == 0: #Warm storage
         Value_gen += Values[ind]
@@ -241,7 +276,7 @@ Ws_bnb = 0
 Ls_bnb = 0
 for ind, val in enumerate(Assignment_bnb):
     if val == 1: #Lukewarm storage
-        Value_bnb += 0.8*Values[ind]
+        Value_bnb += 0.5*Values[ind]
         Ls_bnb += Weights[ind]
     elif val == 0: #Warm storage
         Value_bnb += Values[ind]
@@ -287,7 +322,7 @@ print("Max total value (GA):", Max_val_gen)
 print('Double check of value: ', Value_gen)
 print('Warm storage used: ', Ws_gen, ' | Lukewarm storage used: ', Ls_gen)
 print('CPU Time required (nanoseconds): ', time_gen)
-#print("Task assignments (task -> agent):", Assignment_gen)
+print("Task assignments (task -> agent):", Assignment_gen)
 
 print('OTHER RESULTS')
 print('Percentage of same choices: ', corr)

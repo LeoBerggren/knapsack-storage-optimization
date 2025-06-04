@@ -62,14 +62,10 @@ B = 5264/2158
 C = 10662/5264
 df['data downloads'] = data
 df['doc downloads'] = doc
-#Constructing the hyperparameters
+#Constructing the hyperparameters #
 Weights = (df['Size']*1000).tolist() #converts from MB to KB
-#print(Weights)
 Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#Canceled']))+(B*C*df['data downloads']+C*df['doc downloads'])+df['Visits']))/df['Days passed'].astype(float).tolist()
-#print(Values)
-#print(sum(Weights))
-Max_capacity = int(0.1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
-#We test different constructed max capacities to restrain the knapsack more
+Max_capacity = int(0.1*1000*1000*1000) #This is 100GB, different values might be appropriate
 
 def gap_branch_and_bound(values, weights, capacities):
     num_agents = len(values)
@@ -149,8 +145,8 @@ def gap_branch_and_bound(values, weights, capacities):
 
 
 
-Capacities = [2*0.5*Max_capacity, 20*Max_capacity]
-Multi_values = [1*Values, [0.1 * v for v in Values]]
+Capacities = [0.5*Max_capacity, Max_capacity]
+Multi_values = [1*Values, [0.8 * v for v in Values]]
 Multi_weights = [Weights, Weights] #In our case I don't think there is any need to change both capacity and weights. 
 #They stand for different things, but since we assume that it will affect it linearly, the change is already applied to capacity
 #Alternatively we can think that from a budget perspective it is cheaper to buy the storage(capacity) but it

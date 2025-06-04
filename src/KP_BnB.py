@@ -61,7 +61,7 @@ Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#C
 #print(Values)
 #print(Values)
 #print(sum(Weights))
-Max_capacity = int(0.1*1000*1000*1000)
+Max_capacity = int(1*1000*1000*1000)
 
 
 
@@ -139,7 +139,7 @@ def knapsack_branch_and_bound(values, weights, W):
                 heapq.heappush(queue, (-curr_value, curr_weight, new_bound, next_index, included))
    
     # Map back to original indices
-    best_items_original = [sorted_indices[i] for i in best_items]
+    best_items_original = sorted([sorted_indices[i] for i in best_items])
 
     return max_value, best_items_original
 
