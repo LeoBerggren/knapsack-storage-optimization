@@ -56,14 +56,8 @@ df['data downloads'] = data
 df['doc downloads'] = doc
 #Constructing the hyperparameters
 Weights = (df['Size']*1000).tolist() #converts from MB to KB
-#print(Weights)
 Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#Canceled']))+(B*C*df['data downloads']+C*df['doc downloads'])+df['Visits']))/df['Days passed'].astype(float).tolist()
-#print(Values)
-#print(Values)
-#print(sum(Weights))
-Max_capacity = int(1*1000*1000*1000)
-
-
+Max_capacity = int(0.5*1000*1000*1000) #Max capacity set to 500GB. Other values might be appropriate
 
 def knapsack_branch_and_bound(values, weights, W):
     def calculate_bound(value, weight, index, values, weights, W):
@@ -144,11 +138,7 @@ def knapsack_branch_and_bound(values, weights, W):
     return max_value, best_items_original
 
 
-#print("Values of items:", Values)
-#print("Weights of items:", Weights)
-print("Knapsack capacity:", Max_capacity)
-print("Total Value: ", sum(Values))
-print("Total Weight: ", sum(Weights))
+
 
 max_value, selected_indices = knapsack_branch_and_bound(Values, Weights, Max_capacity)
 print("Maximum value in knapsack =", max_value)

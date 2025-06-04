@@ -1,31 +1,87 @@
 import pandas as pd
 import numpy as np
 
-df = pd.read_excel('/data/kidr_activity.xlsx', header=None)
+df = pd.read_excel('data/kidr_activity.xlsx', header=None)
 df = df.drop([0,1,2]) #Drops the rows that are not part of the data.
 df.columns = df.iloc[0].to_list() #Designates the relevant row as the header.
 df = df[1:]
 #print(df.head())
 #print(df.columns)
 
-var = ['SND number','Size','Days passed','#Canceled','Number of Requests', 'Access Granted*'] #relevant variables
+var = ['SND number','Size','Days passed','#Canceled','Number of Requests', 'Access Granted*', 'Visits'] #relevant variables
 #The size of the datasets are given in MB
 df = df[var]
 df = df.reset_index(drop=True)
-columns_to_fill = ['Number of Requests', 'Access Granted*','#Canceled'] 
+columns_to_fill = ['Number of Requests', 'Access Granted*','#Canceled','Visits'] 
 df[columns_to_fill] = df[columns_to_fill].fillna(0) #Filling in the empty rows as zeros
 df['Size'] = df['Size'].astype('float') #Since the class of 'Size' is initially strings we convert it to float
-"""
-print(df.head())
-print(df.loc[1, 'Size'])
-print(type(df.loc[1, 'Size']))
-print(type(df.loc[1, 'Days passed']))
-print(type(df.loc[1, 'Number of Requests']))
-"""
+
+
+#Constructing the hyperparameters
+df_ned = pd.read_excel('data/nedladdningar.xlsx', header=None)
+df_ned.columns = df_ned.iloc[0].to_list() #Designates the relevant row as the header.
+df_ned = df_ned[1:]
+
+var_ned = ['Dataset','Filtyp']
+df_ned = df_ned[var_ned]
+
+data = np.zeros(len(df)) #Vector of 62 zeros
+doc = np.zeros(len(df))
+#print('datapoints: ', len(df))
+
+
+#for each dataset (those in df) this will go through each download in df_ned for that dataset and count it as data
+# or as document depending on its 'filtyp'. 
+# if it is not marked as 'document' or 'data' it will raise an keyerror since something is wrong with the spreadsheet
+# If it does not find anymore or any it will go to the next item. 
+
+for index_1, value_1 in df['SND number'].items():
+    index_1_int: int = int(index_1)  # Explicitly cast to int
+    for index_2, value_2 in df_ned['Dataset'].items():
+        index_2_int: int = int(index_2)  # Explicitly cast to int
+        filtyp_value2: str = df_ned['Filtyp'][index_2_int] #explicitly declare that the value is a string.
+        if value_2 == value_1:
+                if df_ned['Filtyp'][index_2_int] == 'dokumentation':
+                    doc[index_1_int] += 1
+                elif df_ned['Filtyp'][index_2_int]== 'data':
+                    data[index_1_int] += 1
+                else:
+                    print('something wrong')
+        else:
+            pass
+
+data = data.astype(int)
+
+#print("data downloads: ", data)
+#print('Total data downloads: ', sum(data))
+#print('document downloads: ', doc)
+#print("Total document downloads: ", sum(doc))
+#print('total downloads:',np.sum(doc)+np.sum(data))            
+
+
+### PARAMETER CONSTRUCTION ###
+A = 2158/233
+B = 5264/2158
+C = 10662/5264
+df['data downloads'] = data
+df['doc downloads'] = doc
 #Constructing the hyperparameters
 Weights = (df['Size']*1000).tolist() #converts from MB to KB
-Values = (df['Access Granted*']+1/2*(df['Number of Requests']-1/2*df['#Canceled'])+1)/df['Days passed'].astype(float).tolist()
-Max_capacity = int(0.1*1000*1000*1000) #This is 100GB. Other values might be appropriate
+Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#Canceled']))+(B*C*df['data downloads']+C*df['doc downloads'])+df['Visits']))/df['Days passed'].astype(float).tolist()
+Max_capacity = int(0.5*1000*1000*1000) #Tot cap of KI is 70Tb
+#We test different constructed max capacities to restrain the knapsack more
+
+# DP SPECIFIC PARAMETERS #
+dp_weights = [w/1000+1 for w in Weights] #makes sure that we won't have a zero when we round the weights 
+dp_weights = [round(w) for w in dp_weights] #also converts the weights to Mb
+Max_capacity_dp = int(Max_capacity/1000) #Converts max_capacity to Mb
+
+#REVERSE DP SPECIFIC PARAMETERS #
+Round_values = round(10000*Values) #Integer conversion of values, different powers of 10 gives varying specificity
+V_SUM_MAX = int(sum(Round_values))  # Maximum possible value sum
+N_MAX = len(Values)
+W_MAX = float('inf')  # Use infinity for large weights
+dp = [[W_MAX for _ in range(N_MAX)] for _ in range(V_SUM_MAX + 1)]
 
 """The disparity between the weights, i.e. that some are very big and some very small, makes this problem 
 fundamentally unsuited for an dynamic programming approach. Since Scaling the weights such that there are no
@@ -33,9 +89,7 @@ decimals would require a unit size of 10 bytes. This becomes problematic when yo
 of TB as well as a max capacity of several TB. Since it effectively requires a dp-table with one dimension having
 a length of 100*1000^3. Requiring massive amount of memory to calculate 
 """
-dp_weights = [w/100+1 for w in Weights] #makes sure that we won't have a zero when we round the weights 
-dp_weights = [round(w) for w in dp_weights] #also converts the weights to 100s of kb
-Max_capacity_dp = int(Max_capacity/100) #Converts max_capacity to 100s of kb
+
 #Dynamic approach
 def dyn_knapsack(Weights, Values, Max_capacity):
     """
@@ -103,14 +157,7 @@ for index in selected_items:
 what is the greatest value given a capacity, ask what is the minimum weight to achieve certain values, ranging 
 from the absolute maximum possible value and down."""
 
-Round_values = round(1000*1000*Values) #Integer conversion of values, different powers of 10 gives varying specificity
-#print(Round_values)
-V_SUM_MAX = int(sum(Round_values))  # Maximum possible value sum
-N_MAX = len(Values)
-W_MAX = float('inf')  # Use infinity for large weights
-
-dp = [[W_MAX for _ in range(N_MAX)] for _ in range(V_SUM_MAX + 1)]
-
+## Reverse dynamic algorithm ##
 def knapsack_large_weights(weights, values, capacity):
     for i in range(N_MAX):
         dp[0][i] = 0
@@ -153,8 +200,7 @@ def knapsack_large_weights(weights, values, capacity):
 print('THE REVERSE DYNAMIC SOLUTION')
 Tot_val, dp_selected_items, used_capacity = knapsack_large_weights(Weights, Round_values, Max_capacity)
 
-
-print("Selected items (indices):", dp_selected_items)
+print("Selected items (indices):", np.sort(dp_selected_items))
 print("Number of selected items:", len(dp_selected_items))
 print("Used capacity:", used_capacity / 1000, "MB, out of:", Max_capacity/1000, "MB")  # Print used capacity in MB
 print("Max value:", Tot_val)  # max value achieved
@@ -183,7 +229,7 @@ def Greedy_knapsack(Max_capacity, Weights, Values):
 
 print('THE GREEDY SOLUTION')
 gr_selected_items = Greedy_knapsack(Max_capacity, Weights, Values)
-print("Selected item indices:", gr_selected_items)
+print("Selected item indices:", np.sort(gr_selected_items))
 print("Amount of items: ", len(gr_selected_items))
 print("Greedy alg total value: ", sum(Values[i] for i in gr_selected_items))
 print("Greedy alg used capacity: ", sum(Weights[i] for i in gr_selected_items))

@@ -63,15 +63,12 @@ df['data downloads'] = data
 df['doc downloads'] = doc
 #Constructing the hyperparameters
 Weights = (df['Size']*1000).tolist() #converts from MB to KB
-#print(Weights)
 Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#Canceled']))+(B*C*df['data downloads']+C*df['doc downloads'])+df['Visits']))/df['Days passed'].astype(float).tolist()
-#print(Values)
-#print(Values)
-#print(sum(Weights))
-Max_capacity = int(1*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
+Max_capacity = int(0.5*1000*1000*1000) #Max capacity is set to 500GB. Other values might be appropriate 
 #We test different constructed max capacities to restrain the knapsack more
+
 #First results with pop=100, gen=300, mut=0.05
-def genetic_algorithm(values, weights, capacities, population_size=100, generations=1000, mutation_rate=0.05):
+def genetic_algorithm(values, weights, capacities, population_size=100, generations=300, mutation_rate=0.05):
     num_agents = len(values)
     num_tasks = len(values[0])
 

@@ -3,10 +3,9 @@ import random
 import pandas as pd
 import numpy as np
 import time
-# Set random seed
+
+# Sets random seed
 random.seed(42)
-
-
 
 df = pd.read_excel('data/kidr_activity.xlsx', header=None)
 df = df.drop([0,1,2]) #Drops the rows that are not part of the data.
@@ -28,17 +27,14 @@ df_ned = df_ned[1:]
 var_ned = ['Dataset','Filtyp']
 df_ned = df_ned[var_ned]
 
-#pseudocode
+
 data = np.zeros(len(df)) #Vector of 62 zeros
 doc = np.zeros(len(df))
-print('datapoints: ', len(df))
-
-
+ 
 #for each dataset (those in df) this will go through each download in df_ned for that dataset and count it as data
 # or as document depending on its 'filtyp'. 
 # if it is not marked as 'document' or 'data' it will raise an keyerror since something is wrong with the spreadsheet
-# If it does not find anymore or any it will go to the next item. 
-
+# If it does not find anymore or any it will go to the next item.
 for index_1, value_1 in df['SND number'].items():
     index_1_int: int = int(index_1)  # Explicitly cast to int
     for index_2, value_2 in df_ned['Dataset'].items():
@@ -65,7 +61,7 @@ df['doc downloads'] = doc
 #Constructing the hyperparameters #
 Weights = (df['Size']*1000).tolist() #converts from MB to KB
 Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#Canceled']))+(B*C*df['data downloads']+C*df['doc downloads'])+df['Visits']))/df['Days passed'].astype(float).tolist()
-Max_capacity = int(0.1*1000*1000*1000) #This is 100GB, different values might be appropriate
+Max_capacity = int(0.5*1000*1000*1000) #This is 500GB, different values might be appropriate
 
 def gap_branch_and_bound(values, weights, capacities):
     num_agents = len(values)
@@ -122,8 +118,8 @@ def gap_branch_and_bound(values, weights, capacities):
                             if new_agent_loads[a] + weights[a][next_task] <= capacities[a]:
                                 best_ratio = max(best_ratio, ratio)
                     est_bound += best_ratio * 1  # Assume we can pick the best agent for this task
-                eps = 3 #decided the fineness of our search, the larger it is the more options we search through
-                if est_bound > 2*(best_value)/3:
+                eps = 2/3 #decides the fineness of our search
+                if est_bound > eps*(best_value): 
                     heapq.heappush(heap, (-est_bound, new_value, task_idx + 1, new_agent_loads, new_assignment))
                 #else:
                     #print(f"✘ Pruned (low bound): task {task} -> agent {agent}, est_bound={est_bound:.4f}, current best={best_value:.4f}")
@@ -145,8 +141,8 @@ def gap_branch_and_bound(values, weights, capacities):
 
 
 
-Capacities = [0.5*Max_capacity, Max_capacity]
-Multi_values = [1*Values, [0.8 * v for v in Values]]
+Capacities = [0.1*Max_capacity, 1.8*Max_capacity]
+Multi_values = [1*Values, [0.5 * v for v in Values]]
 Multi_weights = [Weights, Weights] #In our case I don't think there is any need to change both capacity and weights. 
 #They stand for different things, but since we assume that it will affect it linearly, the change is already applied to capacity
 #Alternatively we can think that from a budget perspective it is cheaper to buy the storage(capacity) but it

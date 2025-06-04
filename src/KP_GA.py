@@ -57,11 +57,8 @@ df['data downloads'] = data
 df['doc downloads'] = doc
 #Constructing the hyperparameters
 Weights = (df['Size']*1000).tolist() #converts from MB to KB
-#print(Weights)
 Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#Canceled']))+(B*C*df['data downloads']+C*df['doc downloads'])+df['Visits']))/df['Days passed'].astype(float).tolist()
-#print(sum(Weights))
-Max_capacity = int(0.5*1000*1000*1000) #Max capacity is 70TB = tot cap of KI 
-#We test different constructed max capacities to restrain the knapsack more
+Max_capacity = int(0.5*1000*1000*1000) #Max capacity is set to 500GB. Other values might be appropriate
 
 def genetic_knapsack(weights, values, max_capacity, population_size, generations, mutation_rate):
     n = len(weights)
@@ -125,11 +122,8 @@ def genetic_knapsack(weights, values, max_capacity, population_size, generations
     return best_fitness, selected_items, used_capacity
 
 # Example Usage
-exweights = [2, 5, 10, 5]
-exvalues = [40, 30, 50, 10]
-exmax_capacity = 16
 population_size = 200
-generations = 1000
+generations = 250
 mutation_rate = 0.012
 
 time_start = time.process_time()
