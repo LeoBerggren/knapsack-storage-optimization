@@ -55,6 +55,7 @@ Genetic approach: [0, 0, -1, 0, 0, -1, 0, 0, 0, 0, 0, 0, -1, 1, 0, 0, 0, -1, 1, 
 
 Branch and Bound: [-1, -1, -1, 0, 0, -1, 0, -1, -1, 0, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, 1, -1, 0, -1, -1, -1, -1, 0, 0, -1, -1, 0, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, -1]
 
+OBS: for docstrings describing the respective functions used in the code, look at the algorithms respective codefile rather than the files that include several (except the one that has both dynamic and greedy). The docstrings have not been copied to those files.
 
 
 
