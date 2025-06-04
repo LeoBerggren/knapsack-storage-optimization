@@ -64,6 +64,19 @@ Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#C
 Max_capacity = int(0.5*1000*1000*1000) #This is 500GB, different values might be appropriate
 
 def gap_branch_and_bound(values, weights, capacities):
+    """
+    Solves the generalized assignment problem using a branch and bound algorithm. Instead of the classical example of agents choosing jobs, we view it as objects in a multiple knapsacks.
+
+    Args:
+        - values: the values of the objects, depending on both the object and which knapsack it is put in
+        - weights: the weights of the objects, depending on both the object and which knapsack it is put in
+        - capacities: the maximum capacities of the different knapsacks.
+
+    Returns:
+        The best value achieved from the assignment of objects to the knapsacks.
+        A tuple of the assignments of the objects to the different knapsacks.
+    """
+
     num_agents = len(values)
     num_tasks = len(values[0])
 

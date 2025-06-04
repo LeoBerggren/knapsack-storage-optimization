@@ -60,7 +60,34 @@ Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#C
 Max_capacity = int(0.5*1000*1000*1000) #Max capacity set to 500GB. Other values might be appropriate
 
 def knapsack_branch_and_bound(values, weights, W):
+    """
+    Solves the 0/1 Knapsack problem using a Branch and Bound algorithm.
+
+    Args:
+        values: A list of the values of the items.
+        weights: A list of the weights of the items.
+        W: The maximum capacity of the knapsack.
+    Returns:
+        A tuple containing:
+            - The maximum value that can be carried in the knapsack.
+            - A list of the indices of the items included in the optimal solution.
+    """
+
     def calculate_bound(value, weight, index, values, weights, W):
+        """
+        Calculates the upper bound of a branchs potential value
+        
+        Args:
+            value: sum of values of the so far included on the current branch, including the next objects value
+            weight: sum of weights of the so far included on the current branch, including the next objects weight
+            index: the next index 
+            values: the list of values corresponding to their objects sorted in size by their value/weight ratio
+            weights: the list of weights corresponding to their objects sorted in size by their value/weight ratio
+            W: maximum capacity of the knapsack
+
+        Returns:
+            new upper bound of branchs potential value
+        """
         if weight >= W:
             return 0
         bound = value

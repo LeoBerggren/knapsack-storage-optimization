@@ -61,12 +61,46 @@ Values = ((A*B*C*(3/2*df['Access Granted*']+(df['Number of Requests']-1/2*df['#C
 Max_capacity = int(0.5*1000*1000*1000) #Max capacity is set to 500GB. Other values might be appropriate
 
 def genetic_knapsack(weights, values, max_capacity, population_size, generations, mutation_rate):
+    """
+    Solves the 0/1 Knapsack problem using a genetic algorithm.
+
+    Args:
+        weights: A list of the weights of the items.
+        values: A list of the values of the items.
+        max_capacity: The maximum capacity of the knapsack.
+        population_size: the number of solutions (aka "chromosomes") generated for each generation
+        generations: the number of generations that the algorithm iterates through
+        mutation_rate: the likelyhood of a random change in a chromosome
+
+    Returns:
+        A tuple containing:
+            - The best fitness aka maximum value that can be carried in the knapsack.
+            - A list of the indices of the items included in the optimal solution.
+            - The optimal solutions used capacity
+    """
     n = len(weights)
 
     def generate_chromosome():
+        """
+        Generates a random chromosome/"solution"
+
+        Returns:
+            a list of length n of random integers of either zeros or ones.
+        
+        """
         return [random.randint(0, 1) for _ in range(n)]
 
     def calculate_fitness(chromosome):
+        """
+        Calculates a fitness value of a solution
+
+        Args: 
+            - chromosome: a possible solution for the problem
+        
+        Returns: 
+            Either 0 if the proposed solution has an higher total weight than the max capacity,
+            or total_value if it does not.
+        """
         total_weight = sum(weights[i] for i in range(n) if chromosome[i] == 1)
         total_value = sum(values[i] for i in range(n) if chromosome[i] == 1)
         #print(f"Total weight: {total_weight}, Total value: {total_value}")
@@ -77,16 +111,47 @@ def genetic_knapsack(weights, values, max_capacity, population_size, generations
             return 0  # Return 0 if capacity is exceeded
 
     def selection(population, fitness_values):
+        """
+        Selects a number of parents equal to the population from the population, semirandomly with chromosomes with higher fitness_values being more likely to be chosen. It is done with replacement.
+
+        Args:
+            - population: a list of chromosomes or solutions 
+            - fitness_values: corresponding fitness values of the population
+        Returns:
+            A list of "parents" equal in size to the population
+        """
+
         selected_parents = random.choices(population, weights=fitness_values, k=len(population))
         return selected_parents
 
     def crossover(parent1, parent2):
+        """
+        splits two parents randomly and adds the different parts with each other, making a "child"
+        
+        Args:
+            - parent1: first parent
+            - parent2: second parent
+
+        Returns
+            two "children" each made up of one different part of each parent.
+        """
         crossover_point = random.randint(1, n - 1)
         child1 = parent1[:crossover_point] + parent2[crossover_point:]
         child2 = parent2[:crossover_point] + parent1[crossover_point:]
         return child1, child2
 
     def mutate(chromosome, mutation_rate):
+        """
+        Randomly mutates a chromosome depending on some mutation rate
+
+        Args:
+            - chromosome: the chromosome to be or not be mutaded
+            - mutation_rate: the likelyhood of mutation
+
+        Returns:
+            The chromosome, mutated or not.
+        """
+        
         for i in range(n):
             if random.random() < mutation_rate:
                 chromosome[i] = 1 - chromosome[i]

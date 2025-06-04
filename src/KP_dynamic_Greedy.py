@@ -146,12 +146,6 @@ print('THE DYNAMIC SOLUTION')
 max_value, selected_items = dyn_knapsack(dp_weights, Values, Max_capacity_dp)
 print("Maximum value:", max_value)
 print("Selected items (indices):", selected_items)
-"""
-# Example to print item details:
-print("Selected items:")
-for index in selected_items:
-    print(f"Item (Index {index}): Weight = {Weights[index]}, Value = {Values[index]}")
-"""
 
 """An alternative that is still dynamic prgramming is to flip the table so to speak, and instead of asking 
 what is the greatest value given a capacity, ask what is the minimum weight to achieve certain values, ranging 
@@ -159,6 +153,20 @@ from the absolute maximum possible value and down."""
 
 ## Reverse dynamic algorithm ##
 def knapsack_large_weights(weights, values, capacity):
+    """
+    Solves the 0/1 Knapsack problem using dynamic programming.
+
+    Args:
+        capacity: The maximum capacity of the knapsack.
+        weights: A list of the weights of the items.
+        values: A list of the values of the items.
+
+    Returns:
+        A tuple containing:
+            - The maximum value that can be carried in the knapsack.
+            - A list of the indices of the items included in the optimal solution.
+            - The total weight of all the items in the knapsack
+    """
     for i in range(N_MAX):
         dp[0][i] = 0
 
@@ -211,6 +219,18 @@ print("Total Value ", sum(Values[i] for i in dp_selected_items))
 
 #Greedy approach
 def Greedy_knapsack(Max_capacity, Weights, Values):
+    """
+    Solves the 0/1 Knapsack problem using the a greedy approach.
+
+    Args:
+        Max_capacity: The maximum capacity of the knapsack.
+        Weights: A list of the weights of the items.
+        Values: A list of the values of the items.
+
+    Returns:
+        - A list of the indices of the items included in the optimal solution.
+
+    """
 
     df = pd.DataFrame({'values': Values, 'weights': Weights})
 

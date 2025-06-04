@@ -69,13 +69,48 @@ Max_capacity = int(0.5*1000*1000*1000) #Max capacity is set to 500GB. Other valu
 
 #First results with pop=100, gen=300, mut=0.05
 def genetic_algorithm(values, weights, capacities, population_size=100, generations=300, mutation_rate=0.05):
+    """
+    Solves the generalized assignment problem using a genetic approach. Here agents are synonymous with knapsacks, and tasks with objects and datasets.
+    a task assigned to a agent is the same thing as an object or dataset assigned to a knapsack or storage.
+
+    Args:
+        - values: the different values of the objects depending on which knapsack they are in
+        - weights: the different weights of the objects depending on which knapsack they are in
+        - capacities: the different max capacities of the different knapsacks
+        - population_size: the number of solutions/individuals that is proposed for each generation
+        - generations: number of generations the algorithm iterates through
+        - mutation_rate: likelyhood of an individual mutating
+
+    Returns:
+        The maximum value found of any solution
+        A tuple representing the best found assignments of datasets to different storage. 
+    """
+    
+    
     num_agents = len(values)
     num_tasks = len(values[0])
 
     def create_individual():
+        """
+        Generates a random individual/"solution"
+
+        Returns:
+            a list of length corresponding to the number of datasets of random integers of either negative ones, zeros or ones.
+        
+        """
         return [random.choice(range(-1, num_agents)) for _ in range(num_tasks)]
 
     def fitness(individual):
+        """
+        Calculates a fitness value of a individual/solution
+
+        Args: 
+            - individual: a possible solution for the problem
+        
+        Returns: 
+            Either 0 if the proposed solution exceeds the max capacities of any knapsack,
+            or total_value, i.e. the sum of the obejcts values (depending on agent), if it does not.
+        """
         total_value = 0
         agent_loads = [0] * num_agents
 
@@ -93,12 +128,32 @@ def genetic_algorithm(values, weights, capacities, population_size=100, generati
         return total_value
 
     def mutate(individual):
+        """
+        Randomly mutates a individual depending on some mutation rate
+
+        Args:
+            - individual: the individual to be or not be mutaded
+
+        Returns:
+            The individual, mutated or not.
+        """
         for i in range(num_tasks):
             if random.random() < mutation_rate:
                 individual[i] = random.choice(range(-1, num_agents))
         return individual
 
     def crossover(parent1, parent2):
+        """
+        splits two parents randomly and adds the different parts with each other, making a "child"
+        
+        Args:
+            - parent1: first parent
+            - parent2: second parent
+
+        Returns
+            two "children" each made up of one different part of each parent.
+        """
+
         point = random.randint(1, num_tasks - 2)
         child1 = parent1[:point] + parent2[point:]
         child2 = parent2[:point] + parent1[point:]        
