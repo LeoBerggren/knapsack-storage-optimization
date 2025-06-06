@@ -1,15 +1,18 @@
 # knapsack-storage-optimization
 Applying the knapsack and GAP problem to research data storage optimization, with data from Karolinska Institutet (KI)
 
-A combination of different algorithms are tried and compared when tackling the 0/1 Knapsack Problem  with unique items as well as the Generalized Assignment Problem (GAP). These are for the Knapsack Problem: dynamic programming; dynamic programming reformulated as to use values instead of weights for the memory matrix; Greedy approach; Genetic approach and lastly Branch and Bound. 
+A combination of different algorithms are tried and compared when tackling the 0/1 Knapsack Problem  with unique items as well as the Generalized Assignment Problem (GAP). These are for the Knapsack Problem: 
+- dynamic programming; 
+- dynamic programming reformulated as to use values instead of weights for the memory matrix;
+- Greedy approach; Genetic approach
+- Branch and Bound. 
 
 For the GAP we implement only a Genetic approach as well as Branch and Bound.
 
-There are a number of different code files for so that each algorithm may be tested and changed separately, but there is one file with all the algorithms designed for the knapsack implementation in one (KP_all.py) and one with all (both) algorithms for the generalized assignment problem implementation (GAP_all.py). They can be run as they are, as the data that is used is provided (kidr_activity.xlsx; nedladdningar.xlsx) and is loaded in the code. 
+There are a number of different code files so that each algorithm may be tested and changed separately, but there is one file with all the algorithms designed for the knapsack implementation in one (KP_all.py) and one with all (both) algorithms for the generalized assignment problem implementation (GAP_all.py). They can be run as they are, as the data that is used is provided (kidr_activity.xlsx; nedladdningar.xlsx) and is loaded in the code. 
 
 If one is interested in changing any of the parameters or hyperparameters  (such as value or max capacity) used in the knapsack and GAP, you may pay attention to the ###Parameter construction### section. Note that while if the code is run as is it won't give any output of which datasets the algorithms select, each algorithm has it as an output, so if one wishes to view them you can just print it.
 
-* ett testset med testresultat för att se att man har lyckats köra din kod rätt och så man kan se formatet av input filerna
 The following part presents what datasets the algorithms choose given the following specifics:
 V = value of datasets in warm storage
 
